@@ -26,10 +26,10 @@ TYPEDEF: _filesec* filesec_t
 TYPEDEF: uchar[16] __darwin_uuid_t
 TYPEDEF: __darwin_uuid_t uuid_t
 
-FUNCTION: filesec_t filesec_init ( void* ) ;
-FUNCTION: int mbr_uid_to_uuid ( uid_t id, uuid_t uu ) ;
+FUNCTION: filesec_t filesec_init ( ) 
+FUNCTION: int mbr_uid_to_uuid ( uid_t id, uuid_t uu ) 
 
-: set-file-example ( ACL -- )
+: set-file-example ( -- )
     filesec_init .
     ;
 
