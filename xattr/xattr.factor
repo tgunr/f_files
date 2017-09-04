@@ -5,9 +5,10 @@
 ! Copyright (C) 2017 Dave Carlton.
 ! See http://factorcode.org/license.txt for BSD license.
 
-USING: accessors classes.tuple io io.encodings io.encodings.utf8 io.files
-io.streams.c kernel kernel.private libc sequences splitting
-unix.ffi uuid ;
+USING: accessors assocs classes.tuple fry io io.encodings
+io.encodings.utf8 io.files io.launcher io.streams.c kernel
+kernel.private libc locals make math math.parser prettyprint sequences
+splitting unix.ffi uuid strings words ;
 IN: file.xattr
 
 : (command-reader) ( command -- stream|f )
@@ -47,25 +48,56 @@ IN: file.xattr
 TUPLE: xattr name value ;
 C: <xattr> xattr 
 
+: nameRead ( xattr -- name )   name>> ;
+
+: soft-quote ( string -- string' )
+    "\"" dup surround ;
+: hard-quote ( string -- string' )
+    "'" dup surround ;
+
+: escape-string-by ( str table -- escaped )
+    ! Convert $, (, ), ' and " to shell escapes
+    [ '[ dup _ at [ % ] [ , ] ?if ] each ] "" make ;
+
+: escape-string ( str -- str' )
+    H{
+       { CHAR: \s "\\ "  }
+       { CHAR: \n "?"    }
+       { CHAR: (  "\\("  }
+       { CHAR: )  "\\)"  }
+       { CHAR: &  "\\&"  }
+       { CHAR: $  "\\$"  }
+       { CHAR: ;  "\\;"  }
+       { CHAR: "  "\""   }      ! for editor's sake "
+       { CHAR: '  "\\'"  } 
+       { CHAR: `  "\\`"  }
+    } escape-string-by ;
+
 : quoted-value ( xattr -- value )
-    value>>  "\"" dup surround ;
+    value>> soft-quote ;
 
-: set-xattr ( path xattr -- )
-    "xattr -w "  over name>> append
-    " " append
-    swap quoted-value  append  
-    " " append
-    prepend
-    system drop ;
+: valueRead ( xattr -- value )
+    value>> dup number?
+    [ number>string ]
+    [ unparse ]
+    if
+    soft-quote
+    ;
 
-: get-xattrs ( path -- {xattr} )
-    "xattr -l " prepend command-lines
-    [ ":" split [ [ 32 = ] trim ] map 
-      xattr slots>tuple ] map ;
+:: xattrStore ( path xattr -- )
+    "xattr -w "
+    xattr nameRead append  +space
+    xattr valueRead +space append
+    path escape-string append
+    run-process wait-for-process .
+    ;
 
-
-: test ( -- x )
-    "~/test"
-    [ "net.polymicro.sha" "sha" <xattr> set-xattr ] keep
-    get-xattrs ;
+:: get-xattrs ( path -- {xattr} )
+    "xattr -l "  path escape-string append
+    dup HERE.
+    utf8
+    [ B contents 
+      [ ":" split [ [ 32 = ] trim ] map 
+        xattr slots>tuple ] map
+    ] with-process-reader ;
     
