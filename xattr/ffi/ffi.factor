@@ -10,8 +10,14 @@ unix.types system ;
 
 IN: xattr.ffi
 
-"libsystem" "/usr/lib/libSystem.dylib" cdecl add-library
-"libsystemB" "/usr/lib/libSystemB.dylib" cdecl add-library
+<<
+"libsystem" {
+        { [ os macosx? ] [ "/usr/lib/libSystem.dylib" ] }
+        { [ os linux? ]  [ "/usr/lib/x86_64-linux-gnu/libc.a" ] }   ! ok for unix?
+} cond
+cdecl add-library >>
+
+! "libsystemB" "/usr/lib/libSystemB.dylib" cdecl add-library
 
 LIBRARY: libsystem
 
