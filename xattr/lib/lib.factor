@@ -5,8 +5,9 @@
 ! Copyright (C) 2017 Dave Carlton.
 ! See http://factorcode.org/license.txt for BSD license.
 
-USING: alien.c-types alien.strings file.xattr.ffi kernel libc
-locals unix.utilities xattr.ffi io.encodings.utf8 ;
+USING: alien alien.c-types alien.strings continuations
+file.xattr.ffi io.backend io.encodings.utf8 kernel libc locals
+math sequences unix.utilities xattr.ffi ;
 IN: file.xattr.lib
 
 CONSTANT: TEST "/Users/davec/test"
@@ -14,11 +15,12 @@ CONSTANT: TESTKEY1 "net.polymicro.checksum.fnv1-32"
 CONSTANT: TESTKEY2 "net.polymicro.sha"
 
 ! ssize_t getxattr ( c-string path, c-string  name, void* value, size_t size, u_int32_t position, int optionals )
-:: getxattr ( path key -- size )
+:: getxattr ( path key -- value )
     f :> value!
-    path key f 0 0 0 (getxattr) :> size!
-    size [
-        path key
+    path normalize-path :> apath!
+    apath key f 0 0 0 (getxattr) :> size!
+    size  0 over =  swap -1 =  or not [
+        apath key
         size malloc :> xvalue
         xvalue size  0 0 (getxattr) drop
         xvalue utf8 alien>string value!
@@ -38,20 +40,43 @@ CONSTANT: TESTKEY2 "net.polymicro.sha"
     ] when
     value ;
     
+! int setxattr ( c-string path, c-string name, void *value, size_t size, u_int32_t position, int options )
+:: setxattr ( path key value -- result )
+    path normalize-path  key value   value length   0 0 (setxattr) ;
 
-
-! int setxattr ( c-string path, c-string name, void *value, size_t size, u_int32_t position, int options ) 
 ! int fsetxattr ( int fd, c-string name, void *value, size_t size, u_int32_t position, int options ) 
 ! int removexattr ( c-string path, c-string name, int options ) 
-! int fremovexattr ( int fd, c-string name, int options ) 
+! int fremovexattr ( int fd, c-string name, int options )
+
+! Probably should walk the ptr and collect the bytes
+:: xattr-strings ( len alien -- strings )
+    alien :> ptr!
+    0 :> slength!
+    len alien <displaced-alien> alien-address :> end
+    { } :> seq!
+    [ ptr alien-address end < ] 
+    [ ptr utf8 alien>string :> newstring
+      newstring length :> slength
+      seq newstring suffix  seq!
+      slength 1+ ptr <displaced-alien> ptr!
+    ] while
+    seq ;
+      
 ! ssize_t listxattr  (  c-string path, c-string namebuff, size_t size, int options  )
-: listxattr ( path -- xattrs )
-    dup f 0 0 (listxattr)
-    [ malloc ] keep
-    [ swap over ] dip 
-    0 (listxattr) drop
+:: listxattr ( path -- xattrs )
+    path normalize-path :> npath
+    npath f 0 0 (listxattr) :> size
+    size malloc :> buf
+    buf -1 =
+    [ f ]
+    [ npath buf size 0 (listxattr)  buf xattr-strings ]
+    if
     ;
 
-    
+:: xattr-values ( path -- {{key:value}} )
+    path listxattr :> keys
+    keys [ path over getxattr  { } 2sequence  ] map
+    ;
+
 ! ssize_t flistxattr ( int fd, c-string namebuff, size_t size, int options ) 
 

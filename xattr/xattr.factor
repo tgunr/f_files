@@ -5,45 +5,12 @@
 ! Copyright (C) 2017 Dave Carlton.
 ! See http://factorcode.org/license.txt for BSD license.
 
-USING: accessors assocs classes.tuple fry io io.encodings
-io.encodings.utf8 io.files io.launcher io.streams.c kernel
-kernel.private libc locals make math math.parser prettyprint sequences
-splitting unix.ffi uuid strings words ;
+USING: accessors alien alien.strings assocs classes.tuple
+file.xattr.lib fry io io.encodings io.encodings.utf8 io.files
+io.launcher io.streams.c kernel kernel.private libc locals make
+math math.parser namespaces prettyprint sequences splitting
+strings unix.ffi uuid words ;
 IN: file.xattr
-
-: (command-reader) ( command -- stream|f )
-    uuid1 "/tmp/" prepend
-    [ " >" prepend append system ] keep
-    swap 0=
-    [ (file-reader) ]
-    [ drop f ]
-    if
-    ;
-
-: <command-reader> ( command -- stream )
-    (command-reader) { file-reader } declare 
-    utf8 <decoder> ; inline
-
-: with-command-reader ( command quot -- x )
-    [ <command-reader> ] dip
-    with-input-stream ; inline
-
-: command-lines ( command -- seq )
-    <command-reader> stream-lines ;
-
-: (popen-reader) ( command -- stream|f )
-    "r+" popen <c-reader> ;
-
-: <popen-reader> ( command -- stream )
-    (popen-reader) { file-reader } declare 
-    utf8 <decoder> ; inline
-
-: with-popen-reader ( command quot -- )
-    [ <popen-reader> ] dip
-    with-input-stream ; inline
-
-:  popen-lines ( command -- seq )
-    <popen-reader> stream-lines ;
 
 TUPLE: xattr name value ;
 C: <xattr> xattr 
@@ -76,28 +43,25 @@ C: <xattr> xattr
 : quoted-value ( xattr -- value )
     value>> soft-quote ;
 
-: valueRead ( xattr -- value )
+: (value) ( xattr -- value )
     value>> dup number?
     [ number>string ]
-    [ unparse ]
+    [ B unparse ]
     if
-    soft-quote
     ;
 
-:: xattrStore ( path xattr -- )
-    "xattr -w "
-    xattr nameRead append  +space
-    xattr valueRead +space append
-    path escape-string append
-    run-process wait-for-process .
+: valueRead ( xattr -- value )
+    (value) soft-quote
     ;
+
+SYMBOL: XATTRERROR
+:: xattrStore ( path xattr -- )
+    path  xattr name>>  xattr value>>
+    number>string utf8 string>alien setxattr
+    XATTRERROR set ;
 
 :: get-xattrs ( path -- {xattr} )
-    "xattr -l "  path escape-string append
-    dup HERE.
-    utf8
-    [ B contents 
-      [ ":" split [ [ 32 = ] trim ] map 
-        xattr slots>tuple ] map
-    ] with-process-reader ;
+    path xattr-values 
+    keys [ path over getxattr  <xattr>  ] map
+    ;
     
