@@ -13,7 +13,7 @@ IN: xattr.ffi
 <<
 "libsystem" {
         { [ os macosx? ] [ "/usr/lib/libSystem.dylib" ] }
-        { [ os linux? ]  [ "/usr/lib/x86_64-linux-gnu/libc.a" ] }   ! ok for unix?
+        { [ os linux? ]  [ "/usr/lib/x86_64-linux-gnu/libc.a" ] }
 } cond
 cdecl add-library >>
 
