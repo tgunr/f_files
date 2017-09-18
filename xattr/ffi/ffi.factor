@@ -11,9 +11,9 @@ unix.types system ;
 IN: xattr.ffi
 
 <<
-"libsystem" {
+"libxattr" {
         { [ os macosx? ] [ "/usr/lib/libSystem.dylib" ] }
-        { [ os linux? ]  [ "/usr/lib/x86_64-linux-gnu/libc.a" ] }
+        { [ os linux? ]  [ "/lib/x86_64-linux-gnu/libattr.a" ] }
 } cond
 cdecl add-library >>
 
