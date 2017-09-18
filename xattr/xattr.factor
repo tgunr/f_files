@@ -55,7 +55,7 @@ C: <xattr> xattr
     ;
 
 SYMBOL: XATTRERROR
-:: xattrStore ( path xattr -- )
+:: xattrStore ( xattr path -- )
     path  xattr name>>  xattr value>>
     number>string utf8 string>alien setxattr
     XATTRERROR set ;
