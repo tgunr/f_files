@@ -9,7 +9,7 @@ USING: accessors alien alien.strings assocs classes.tuple
 file.xattr.lib fry io io.encodings io.encodings.utf8 io.files
 io.launcher io.streams.c kernel kernel.private libc locals make
 math math.parser namespaces prettyprint sequences splitting
-strings unix.ffi uuid words ;
+strings threads unix.ffi uuid words ;
 IN: file.xattr
 
 TUPLE: xattr name value ;
@@ -57,11 +57,11 @@ C: <xattr> xattr
 SYMBOL: XATTRERROR
 :: xattrStore ( xattr path -- )
     path  xattr name>>  xattr value>>
-    number>string utf8 string>alien setxattr
+    number>string utf8 string>alien  yield  setxattr
     XATTRERROR set ;
 
 :: get-xattrs ( path -- {xattr} )
     path xattr-values 
-    keys [ path over getxattr  <xattr>  ] map
+    keys [ path over  yield  getxattr <xattr> ] map
     ;
     
