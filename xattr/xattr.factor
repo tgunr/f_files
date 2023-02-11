@@ -54,6 +54,8 @@ C: <xattr> xattr
     (value) soft-quote
     ;
 
+FROM: file.xattr.lib => getxattr setxattr ; 
+
 SYMBOL: XATTRERROR
 :: xattrStore ( xattr path -- )
     path  xattr name>>  xattr value>>

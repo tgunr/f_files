@@ -7,7 +7,7 @@
 
 USING: alien alien.c-types alien.strings continuations
 file.xattr.ffi io.backend io.encodings.utf8 kernel libc locals
-math sequences unix.utilities xattr.ffi ;
+math sequences xattr.ffi ;
 IN: file.xattr.lib
 
 CONSTANT: TEST "/Users/davec/test"
