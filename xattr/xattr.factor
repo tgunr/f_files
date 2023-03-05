@@ -9,7 +9,7 @@ USING: accessors alien alien.strings assocs classes.tuple
 file.xattr.lib fry io io.encodings io.encodings.utf8 io.files
 io.launcher io.streams.c kernel kernel.private libc locals make
 math math.parser namespaces prettyprint sequences splitting
-strings threads unix.ffi uuid words ;
+strings threads unix.ffi uuid words file.xattr.lib xml.entities ;
 IN: file.xattr
 
 TUPLE: xattr name value ;
@@ -22,12 +22,11 @@ C: <xattr> xattr
 : hard-quote ( string -- string' )
     "'" dup surround ;
 
-: escape-string-by ( str table -- escaped )
-    ! Convert $, (, ), ' and " to shell escapes
-    [ '[ dup _ at [ % ] [ , ] ?if ] each ] "" make ;
+! : escape-string-by ( str table -- escaped )
+!     ! Convert $ ( ) ' and " to shell escapes
+!     '[ [ dup _ at [ % ] [ , ] ?if ] each ] "" make ; inline
 
-: escape-string ( str -- str' )
-    H{
+CONSTANT: PATH_ESCAPE_CHARS H{
        { CHAR: \s "\\ "  }
        { CHAR: \n "?"    }
        { CHAR: (  "\\("  }
@@ -38,7 +37,13 @@ C: <xattr> xattr
        { CHAR: "  "\""   }      ! for editor's sake "
        { CHAR: '  "\\'"  } 
        { CHAR: `  "\\`"  }
-    } escape-string-by ;
+       }
+       
+: escape-string ( str -- str' )
+    [ dup
+      [ PATH_ESCAPE_CHARS at ] [ nip ] [ drop 1string ] ?if
+    ] { } map-as
+    "" join ; 
 
 : quoted-value ( xattr -- value )
     value>> soft-quote ;
