@@ -1,7 +1,7 @@
 ! File: xattr.factor
 ! Version: 0.1
 ! DRI: Dave Carlton
-! Description: Another fine Factor file!
+! Description: Implement extended attributes 
 ! Copyright (C) 2017 Dave Carlton.
 ! See http://factorcode.org/license.txt for BSD license.
 
@@ -9,7 +9,7 @@ USING: accessors alien alien.strings assocs classes.tuple
 file.xattr.lib fry io io.encodings io.encodings.utf8 io.files
 io.launcher io.streams.c kernel kernel.private libc locals make
 math math.parser namespaces prettyprint sequences splitting
-strings threads unix.ffi uuid words file.xattr.lib ;
+strings threads unix.ffi uuid words ;
 IN: file.xattr
 
 TUPLE: xattr name value ;
@@ -38,7 +38,7 @@ CONSTANT: PATH_ESCAPE_CHARS H{
        { CHAR: '  "\\'"  } 
        { CHAR: `  "\\`"  }
        }
-       
+        
 : escape-string ( str -- str' )
     [ dup
       [ PATH_ESCAPE_CHARS at ] [ nip ] [ drop 1string ] ?if
