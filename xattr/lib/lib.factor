@@ -66,11 +66,14 @@ CONSTANT: TESTKEY2 "net.polymicro.sha"
 :: listxattr ( path -- xattrs )
     path normalize-path :> npath
     npath f 0 0 (listxattr) :> size
-    size malloc :> buf
-    buf -1 =
-    [ f ]
-    [ npath buf size 0 (listxattr)  buf xattr-strings ]
-    if
+    size -1 =
+    [ f ] 
+    [ size malloc :> buf
+      buf -1 =
+      [ f ]
+      [ npath buf size 0 (listxattr)  buf xattr-strings ]
+      if
+    ] if
     ;
 
 :: xattr-values ( path -- {{key:value}} )
