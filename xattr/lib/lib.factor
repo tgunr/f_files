@@ -7,7 +7,7 @@
 
 USING: alien alien.c-types alien.strings continuations
 file.xattr.ffi io.backend io.encodings.utf8 kernel libc locals
-math sequences xattr.ffi ;
+math sequences xattr.ffi extensions syntax.terse ;
 IN: file.xattr.lib
 
 CONSTANT: TEST "/Users/davec/test"
@@ -41,8 +41,8 @@ CONSTANT: TESTKEY2 "net.polymicro.sha"
     value ;
     
 ! int setxattr ( c-string path, c-string name, void *value, size_t size, u_int32_t position, int options )
-:: setxattr ( path key value -- result )
-    path normalize-path  key value   value length   0 0 (setxattr) ;
+: setxattr ( path key value -- result )
+    [ normalize-path ] 2dip  dup length  0 0 (setxattr) ;
 
 ! int fsetxattr ( int fd, c-string name, void *value, size_t size, u_int32_t position, int options ) 
 ! int removexattr ( c-string path, c-string name, int options ) 
